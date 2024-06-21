@@ -1,0 +1,120 @@
+import tkinter as tk
+from tkinter import messagebox
+
+# Example Sudoku puzzle (0 represents empty cells)
+grid = [
+    [5, 3, 0, 0, 7, 0, 0, 0, 0],
+    [6, 0, 0, 1, 9, 5, 0, 0, 0],
+    [0, 9, 8, 0, 0, 0, 0, 6, 0],
+    [8, 0, 0, 0, 6, 0, 0, 0, 3],
+    [4, 0, 0, 8, 0, 3, 0, 0, 1],
+    [7, 0, 0, 0, 2, 0, 0, 0, 6],
+    [0, 6, 0, 0, 0, 0, 2, 8, 0],
+    [0, 0, 0, 4, 1, 9, 0, 0, 5],
+    [0, 0, 0, 0, 8, 0, 0, 7, 9]
+]
+
+# Constants for grid size and cell size
+GRID_SIZE = 9
+CELL_SIZE = 50
+
+
+class SudokuSolverGUI:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Sudoku Solver")
+
+        self.canvas = tk.Canvas(self.root, width=GRID_SIZE * CELL_SIZE, height=GRID_SIZE * CELL_SIZE)
+        self.canvas.pack()
+
+        self.draw_grid()
+        self.draw_puzzle(grid)  # Draw initial puzzle
+
+        solve_button = tk.Button(self.root, text="Solve Sudoku", command=self.solve_sudoku)
+        solve_button.pack(pady=10)
+
+    def draw_grid(self):
+        for i in range(GRID_SIZE + 1):
+            line_width = 2 if i % 3 == 0 else 1
+            x0 = i * CELL_SIZE
+            y0 = 0
+            x1 = i * CELL_SIZE
+            y1 = GRID_SIZE * CELL_SIZE
+            self.canvas.create_line(x0, y0, x1, y1, width=line_width)
+
+            x0 = 0
+            y0 = i * CELL_SIZE
+            x1 = GRID_SIZE * CELL_SIZE
+            y1 = i * CELL_SIZE
+            self.canvas.create_line(x0, y0, x1, y1, width=line_width)
+
+    def draw_puzzle(self, puzzle):
+        self.canvas.delete("numbers")
+        for row in range(GRID_SIZE):
+            for col in range(GRID_SIZE):
+                value = puzzle[row][col]
+                if value != 0:
+                    x = col * CELL_SIZE + CELL_SIZE // 2
+                    y = row * CELL_SIZE + CELL_SIZE // 2
+                    self.canvas.create_text(x, y, text=value, tags="numbers", font=("Arial", 16))
+
+    def solve_sudoku(self):
+        solved_grid = [row[:] for row in grid]  # Make a copy of the grid to solve
+
+        if self.solve_sudoku_recursive(solved_grid):
+            self.draw_puzzle(solved_grid)
+            messagebox.showinfo("Sudoku Solver", "Sudoku puzzle solved successfully!")
+        else:
+            messagebox.showerror("Sudoku Solver", "No solution exists for this Sudoku puzzle.")
+
+    def solve_sudoku_recursive(self, grid):
+        empty_cell = self.find_empty_cell(grid)
+        if not empty_cell:
+            return True
+
+        row, col = empty_cell
+        for num in range(1, 10):
+            if self.is_valid_move(grid, row, col, num):
+                grid[row][col] = num
+                if self.solve_sudoku_recursive(grid):
+                    return True
+                grid[row][col] = 0  # Backtrack
+
+        return False
+
+    def find_empty_cell(self, grid):
+        for row in range(GRID_SIZE):
+            for col in range(GRID_SIZE):
+                if grid[row][col] == 0:
+                    return row, col
+        return None
+
+    def is_valid_move(self, grid, row, col, num):
+        # Check row
+        if num in grid[row]:
+            return False
+
+        # Check column
+        for r in range(GRID_SIZE):
+            if grid[r][col] == num:
+                return False
+
+        # Check 3x3 box
+        start_row = (row // 3) * 3
+        start_col = (col // 3) * 3
+        for r in range(start_row, start_row + 3):
+            for c in range(start_col, start_col + 3):
+                if grid[r][c] == num:
+                    return False
+
+        return True
+
+
+def main():
+    root = tk.Tk()
+    app = SudokuSolverGUI(root)
+    root.mainloop()
+
+
+if __name__ == "__main__":
+    main()
